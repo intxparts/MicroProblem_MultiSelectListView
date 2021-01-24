@@ -89,17 +89,21 @@ namespace WpfApp3
         private readonly List<Person> _people;
         public List<Person> People => _people;
 
-        private readonly DelegateCommand _personSelectionCommand;
-        public DelegateCommand PersonSelectionCommand => _personSelectionCommand;
+        private readonly DelegateCommand _controlLoadedCommand;
+        public DelegateCommand ControlLoadedCommand => _controlLoadedCommand;
 
-        private readonly DelegateCommand _cardSelectionCommand;
-        public DelegateCommand CardSelectionCommand => _cardSelectionCommand;
+        private readonly DelegateCommand _selectionCommand;
+        public DelegateCommand SelectionCommand => _selectionCommand;
+
+        private List<Person> _selectedPeopleCache;
+        private List<Card> _selectedCardCache;
+        private Dictionary<Card, Person> _cardPeopleTable;
+        private int _maxNumSelections = 2;
 
         public ViewModel()
         {
-            _personSelectionCommand = new DelegateCommand(OnPersonSelectionChanged);
-            _cardSelectionCommand = new DelegateCommand(OnCardSelectionChanged);
-
+            _selectionCommand = new DelegateCommand(OnSelectionChanged);
+            _controlLoadedCommand = new DelegateCommand(OnControlLoaded);
             _people = new List<Person>()
             {
                 new Person()
@@ -130,16 +134,123 @@ namespace WpfApp3
                     }
                 }
             };
+            
         }
 
-        private void OnCardSelectionChanged()
+        private bool _isLoaded = false;
+        private void OnControlLoaded()
         {
+            if (_isLoaded)
+                return;
 
+            _people[0].IsSelected = true;
+            _people[0].Cards[0].IsSelected = true;
+
+            _selectedCardCache = new List<Card>();
+            _selectedPeopleCache = new List<Person>();
+            _cardPeopleTable = new Dictionary<Card, Person>();
+            foreach (var p in _people)
+            {
+                if (p.IsSelected)
+                {
+                    _selectedPeopleCache.Add(p);
+                }
+
+                foreach (var c in p.Cards)
+                {
+                    if (c.IsSelected)
+                        _selectedCardCache.Add(c);
+
+                    _cardPeopleTable.Add(c, p);
+                }
+            }
+
+            _isLoaded = true;
         }
 
-        private void OnPersonSelectionChanged()
+        private void OnSelectionChanged()
         {
+            int selectedCacheCardCount = _selectedCardCache.Count;
+            int selectedUICardCount = 0;
+            foreach (var p in _people)
+            {
+                foreach (var c in p.Cards)
+                {
+                    if (c.IsSelected)
+                        ++selectedUICardCount;
+                }
+            }
 
+            // card added
+            if (selectedUICardCount > selectedCacheCardCount)
+            {
+                Card toAdd = null;
+                // get the selected one
+                foreach (var p in _people)
+                {
+                    foreach (var c in p.Cards)
+                    {
+                        if (c.IsSelected && !_selectedCardCache.Contains(c))
+                        {
+                            toAdd = c;
+                            break;
+                        }
+                    }
+                }
+                _selectedCardCache.Add(toAdd);
+
+                var person = _cardPeopleTable[toAdd];
+                if (!person.IsSelected)
+                {
+                    person.IsSelected = true;
+                }
+
+                // remove the oldest selection
+                if (selectedUICardCount > _maxNumSelections)
+                {
+                    var toRemove = _selectedCardCache[0];
+                    _selectedCardCache.Remove(toRemove);
+                    toRemove.IsSelected = false;
+
+                    var removedCardPerson = _cardPeopleTable[toRemove];
+                    if (!removedCardPerson.Cards.Any(c => c.IsSelected))
+                        removedCardPerson.IsSelected = false;
+                }
+            }
+            // card removed
+            else if (selectedUICardCount < selectedCacheCardCount)
+            {
+                // check to see if its the last item
+
+                // prevent this case and reselect the last item in the cache
+                if (selectedUICardCount == 0)
+                {
+                    _selectedCardCache[0].IsSelected = true;
+                }
+                // just go ahead and remove the card
+                else
+                {
+                    Card toRemove = null;
+                    foreach (var c in _selectedCardCache)
+                    {
+                        if (!c.IsSelected)
+                        {
+                            toRemove = c;
+                            break;
+                        }
+                    }
+
+                    _selectedCardCache.Remove(toRemove);
+
+                    var removedCardPerson = _cardPeopleTable[toRemove];
+                    if (!removedCardPerson.Cards.Any(c => c.IsSelected))
+                        removedCardPerson.IsSelected = false;
+                }
+            }
+            else
+            {
+                // do nothing
+            }
         }
     }
 

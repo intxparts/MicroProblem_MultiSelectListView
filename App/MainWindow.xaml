@@ -7,13 +7,18 @@
         xmlns:local="clr-namespace:WpfApp3"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding ControlLoadedCommand}" />
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <Grid>
         <ListView
             ItemsSource="{Binding People}"
             SelectionMode="Multiple">
             <i:Interaction.Triggers>
                 <i:EventTrigger EventName="SelectionChanged">
-                    <i:InvokeCommandAction Command="{Binding PersonSelectionCommand}" />
+                    <i:InvokeCommandAction Command="{Binding SelectionCommand}" />
                 </i:EventTrigger>
             </i:Interaction.Triggers>
             <ListView.Resources>
@@ -33,11 +38,6 @@
                         <ListView Grid.Row="1" 
                                   ItemsSource="{Binding Cards}"
                                   SelectionMode="Multiple">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="SelectionChanged">
-                                    <i:InvokeCommandAction Command="{Binding CardSelectionCommand}" />
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
                             <ListView.Resources>
                                 <Style TargetType="{x:Type ListViewItem}">
                                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
