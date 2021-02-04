@@ -35,17 +35,29 @@ namespace WpfApp3
         public int Age { get; set; }
         public List<Card> Cards { get; set; }
 
-        private bool _isSelected;
         public bool IsSelected
         {
-            get { return _isSelected; }
-            set
+            get { return Cards.Any(c => c.IsSelected); }
+        }
+
+        public object ColorBrush
+        {
+            get
             {
-                _isSelected = value;
-                NotifyPropertyChanged(nameof(IsSelected));
+                if (IsSelected)
+                {
+                    return (SolidColorBrush)(new BrushConverter().ConvertFrom("#ffaacc"));
+                }
+                return (SolidColorBrush)(new BrushConverter().ConvertFrom("#ffffff"));
             }
         }
 
+
+        public void CheckIsSelected()
+        {
+            NotifyPropertyChanged(nameof(IsSelected));
+            NotifyPropertyChanged(nameof(ColorBrush));
+        }
 
         private void NotifyPropertyChanged(string propertyName)
         {
@@ -95,6 +107,9 @@ namespace WpfApp3
         private readonly DelegateCommand _selectionCommand;
         public DelegateCommand SelectionCommand => _selectionCommand;
 
+        private readonly DelegateCommand<Person> _peopleSelectionCommand;
+        public DelegateCommand<Person> PeopleSelectionCommand => _peopleSelectionCommand;
+
         private List<Person> _selectedPeopleCache;
         private List<Card> _selectedCardCache;
         private Dictionary<Card, Person> _cardPeopleTable;
@@ -104,6 +119,7 @@ namespace WpfApp3
         {
             _selectionCommand = new DelegateCommand(OnSelectionChanged);
             _controlLoadedCommand = new DelegateCommand(OnControlLoaded);
+            _peopleSelectionCommand = new DelegateCommand<Person>(OnPeopleSelected);
             _people = new List<Person>()
             {
                 new Person()
@@ -137,13 +153,25 @@ namespace WpfApp3
             
         }
 
+        private void OnPeopleSelected(Person personSelectedIdx)
+        {
+            // who was clicked - need to pass in some kind of identifier
+            
+            // if selected
+            // check to see if all cards can be deselected, otherwise ignore
+            // if all can be deselected then do so
+
+            // if not selected
+            // auto-select the first card
+
+        }
+
         private bool _isLoaded = false;
         private void OnControlLoaded()
         {
             if (_isLoaded)
                 return;
 
-            _people[0].IsSelected = true;
             _people[0].Cards[0].IsSelected = true;
 
             _selectedCardCache = new List<Card>();
@@ -163,6 +191,11 @@ namespace WpfApp3
 
                     _cardPeopleTable.Add(c, p);
                 }
+            }
+
+            foreach (var p in _people)
+            {
+                p.CheckIsSelected();
             }
 
             _isLoaded = true;
@@ -200,21 +233,12 @@ namespace WpfApp3
                 _selectedCardCache.Add(toAdd);
 
                 var person = _cardPeopleTable[toAdd];
-                if (!person.IsSelected)
-                {
-                    person.IsSelected = true;
-                }
-
                 // remove the oldest selection
                 if (selectedUICardCount > _maxNumSelections)
                 {
                     var toRemove = _selectedCardCache[0];
                     _selectedCardCache.Remove(toRemove);
                     toRemove.IsSelected = false;
-
-                    var removedCardPerson = _cardPeopleTable[toRemove];
-                    if (!removedCardPerson.Cards.Any(c => c.IsSelected))
-                        removedCardPerson.IsSelected = false;
                 }
             }
             // card removed
@@ -241,17 +265,52 @@ namespace WpfApp3
                     }
 
                     _selectedCardCache.Remove(toRemove);
-
-                    var removedCardPerson = _cardPeopleTable[toRemove];
-                    if (!removedCardPerson.Cards.Any(c => c.IsSelected))
-                        removedCardPerson.IsSelected = false;
                 }
             }
             else
             {
                 // do nothing
             }
+
+            foreach (var p in _people)
+            {
+                p.CheckIsSelected();
+            }
         }
+    }
+
+    public class DelegateCommand<T> : ICommand
+    {
+        private Action<T> _action;
+        private Func<bool> _canExecuteCb;
+
+        public DelegateCommand(Action<T> action)
+            : this(action, () => true)
+        {
+        }
+
+        public DelegateCommand(Action<T> action, Func<bool> canExecuteCB)
+        {
+            _action = action;
+            _canExecuteCb = canExecuteCB;
+        }
+
+        public void RaiseCanExecuteChanged()
+        {
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _canExecuteCb.Invoke();
+        }
+
+        public void Execute(object parameter)
+        {
+            _action.Invoke((T)parameter);
+        }
+
+        public event EventHandler CanExecuteChanged;
     }
 
     public class DelegateCommand : ICommand

@@ -7,68 +7,87 @@
         xmlns:local="clr-namespace:WpfApp3"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+    <Window.Resources>
+
+    </Window.Resources>
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding ControlLoadedCommand}" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Grid>
-        <ListView
-            ItemsSource="{Binding People}"
-            SelectionMode="Multiple">
-            <i:Interaction.Triggers>
-                <i:EventTrigger EventName="SelectionChanged">
-                    <i:InvokeCommandAction Command="{Binding SelectionCommand}" />
-                </i:EventTrigger>
-            </i:Interaction.Triggers>
-            <ListView.Resources>
-                <Style TargetType="{x:Type ListViewItem}">
-                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
-                </Style>
-            </ListView.Resources>
-            <ListView.ItemTemplate>
+        <ItemsControl ItemsSource="{Binding People}">
+            <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" 
-                                   Text="{Binding Name}" />
-                        <ListView Grid.Row="1" 
-                                  ItemsSource="{Binding Cards}"
-                                  SelectionMode="Multiple">
-                            <ListView.Resources>
-                                <Style TargetType="{x:Type ListViewItem}">
-                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
-                                </Style>
-                            </ListView.Resources>
-                            <ListView.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Width="{Binding (FrameworkElement.ActualWidth), 
-                                                RelativeSource={RelativeSource AncestorType=ScrollContentPresenter}}"
-                                                ItemWidth="{Binding (ListView.View).ItemWidth, 
-                                                RelativeSource={RelativeSource AncestorType=ListView}}"
-                                                MinWidth="{Binding ItemWidth, RelativeSource={RelativeSource Self}}"
-                                                ItemHeight="{Binding (ListView.View).ItemHeight, 
-                                                RelativeSource={RelativeSource AncestorType=ListView}}" />
-                                </ItemsPanelTemplate>
-                            </ListView.ItemsPanel>
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Border BorderThickness="2"
-                                            BorderBrush="Black"
-                                            Height="20"
-                                            Width="20">
-                                        <Rectangle Fill="{Binding ColorBrush}" />
-                                    </Border>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
+                    <StackPanel Orientation="Vertical" Background="{Binding ColorBrush}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" 
+                                           Text="{Binding Name}">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="MouseLeftButtonDown">
+                                            <i:InvokeCommandAction Command="{Binding DataContext.PeopleSelectionCommand, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </TextBlock>
+                                <ListView Grid.Row="1" 
+                                          ItemsSource="{Binding Cards}"
+                                          SelectionMode="Multiple">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="SelectionChanged">
+                                            <i:InvokeCommandAction Command="{Binding DataContext.SelectionCommand, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                    <ListView.Resources>
+                                        <Style TargetType="{x:Type ListViewItem}">
+                                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                        </Style>
+                                    </ListView.Resources>
+                                    <ListView.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Width="{Binding (FrameworkElement.ActualWidth), 
+                                                        RelativeSource={RelativeSource AncestorType=ScrollContentPresenter}}"
+                                                        ItemWidth="{Binding (ListView.View).ItemWidth, 
+                                                        RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                        MinWidth="{Binding ItemWidth, RelativeSource={RelativeSource Self}}"
+                                                        ItemHeight="{Binding (ListView.View).ItemHeight, 
+                                                        RelativeSource={RelativeSource AncestorType=ListView}}" />
+                                        </ItemsPanelTemplate>
+                                    </ListView.ItemsPanel>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderThickness="2"
+                                                    BorderBrush="Black"
+                                                    Height="20"
+                                                    Width="20">
+                                                <Rectangle Fill="{Binding ColorBrush}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </Grid>
+                            <StackPanel Grid.Column="1">
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="MouseLeftButtonDown">
+                                        <i:InvokeCommandAction Command="{Binding DataContext.PeopleSelectionCommand, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" 
+                                                               CommandParameter="{Binding}" />
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                            </StackPanel>
+                        </Grid>
+                        <Separator Foreground="Black" />
+                    </StackPanel>                    
                 </DataTemplate>
-            </ListView.ItemTemplate>
+            </ItemsControl.ItemTemplate>
 
-        </ListView>
+        </ItemsControl>
     </Grid>
 </Window>
